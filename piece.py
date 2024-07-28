@@ -32,3 +32,11 @@ class Piece():
         self.clicked = True
     def getNeighbors(self):
         return self.neighbors
+    def getDisplay(self):
+        """Returns what the bot is able to see on that cell, depending on if the cell has been clicked or not.
+        If covered, returns -1, else, return the number of mines around itself"""
+        if self.clicked:
+            return self.getNumAround()
+        else:
+            return -1 #-1 for a covered cell
+    

@@ -1,5 +1,6 @@
 from piece import Piece
 import random
+import numpy as np
 class Board():
     def __init__(self,size,prob,seed=None):
         self.size = size
@@ -43,7 +44,41 @@ class Board():
                     continue
                 neighbors.append(self.getPiece((row,col)))
         return neighbors
+    
+    def getWindow(self,index,window_size=(1,1)):
+        """Get all neighbors in a wxh window"""
+        width = window_size[0]
+        height = window_size[1]
+        neighbors = []
+        for row in range(index[0] - height, index[0] + height + 1):
+            current_row = []
+            for col in range(index[1] - width, index[1]+ width + 1):
+                outOfBounds = row < 0 or row >= self.size[0] or col < 0 or col >= self.size[1] #check for OOB error
+                same = row == index[0] and col == index[1]
+                if same:
+                    current_row.append(-1) #-1 for a covered cell
+                elif outOfBounds:
+                    current_row.append(-2) #-2 for OOB
+                else:
+                    current_row.append(self.getPiece((row,col)).getDisplay())
+            neighbors.append(current_row)
+        print(f"{width}x{height} Window: {neighbors}")
+        return neighbors
 
+
+    def window_to_one_hot(window):
+        """
+        Gets a window and turns it into a one hot encoding with on dimensions C X H X W. 10 colors channels for -2, -1 and 0 to 8.
+        Args:
+            window: 5x5 or any dimensional window with values from -2 to 8. 
+            -2 = OOB
+            -1 = covered
+            0 - 8 = number of mines around
+        Returns:
+            numpy.ndarray (one-hot encoded window with shape (10,5,5))
+        """
+        #convert to numpy
+        window_np = np.array(window)
     def getSize(self):
         return self.size
     def getPiece(self,index):
