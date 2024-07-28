@@ -1,5 +1,5 @@
 from piece import Piece
-from random import random
+import random
 class Board():
     def __init__(self,size,prob,seed=None):
         self.size = size
@@ -20,7 +20,7 @@ class Board():
         for row in range(self.size[0]):
             row = []
             for col in range(self.size[1]):
-                hasBomb = random() < self.prob
+                hasBomb = random.random() < self.prob
                 if (not hasBomb):
                     self.numNonBombs += 1
                 piece = Piece(hasBomb)
