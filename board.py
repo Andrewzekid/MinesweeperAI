@@ -1,19 +1,22 @@
 from piece import Piece
 from random import random
 class Board():
-    def __init__(self,size,prob):
+    def __init__(self,size,prob,seed=None):
         self.size = size
         self.prob = prob #probability each piece has a bomb
         self.lost = False
         self.won = False
         self.numClicked = 0
         self.numNonBombs = 0
-        self.setBoard()
+        self.seed = seed
+        self.setBoard(seed=self.seed)
 
     
 
-    def setBoard(self):
+    def setBoard(self,seed=None):
         self.board = []
+        if seed:
+            random.seed(seed)
         for row in range(self.size[0]):
             row = []
             for col in range(self.size[1]):
