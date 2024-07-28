@@ -38,5 +38,5 @@ class Piece():
         if self.clicked:
             return self.getNumAround()
         else:
-            return -1 #-1 for a covered cell
+            return 9 #-1 for a covered cell
     

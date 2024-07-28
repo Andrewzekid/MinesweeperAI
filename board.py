@@ -1,6 +1,8 @@
 from piece import Piece
 import random
 import numpy as np
+import json,codecs
+from pathlib import Path
 class Board():
     def __init__(self,size,prob,seed=None):
         self.size = size
@@ -56,29 +58,65 @@ class Board():
                 outOfBounds = row < 0 or row >= self.size[0] or col < 0 or col >= self.size[1] #check for OOB error
                 same = row == index[0] and col == index[1]
                 if same:
-                    current_row.append(-1) #-1 for a covered cell
+                    current_row.append(9) #-1 for a covered cell
                 elif outOfBounds:
-                    current_row.append(-2) #-2 for OOB
+                    current_row.append(10) #10 for OOB
                 else:
                     current_row.append(self.getPiece((row,col)).getDisplay())
             neighbors.append(current_row)
-        print(f"{width}x{height} Window: {neighbors}")
+        print(f"{width}x{height} Window at {index}: {neighbors}")
         return neighbors
 
 
     def window_to_one_hot(window):
         """
-        Gets a window and turns it into a one hot encoding with on dimensions C X H X W. 10 colors channels for -2, -1 and 0 to 8.
+        Gets a window and turns it into a one hot encoding with on dimensions C X H X W. 10 colors channels for 10, -1 and 0 to 8.
         Args:
-            window: 5x5 or any dimensional window with values from -2 to 8. 
-            -2 = OOB
+            window: 5x5 or any dimensional window with values from 10 to 8. 
+            10 = OOB
             -1 = covered
             0 - 8 = number of mines around
         Returns:
             numpy.ndarray (one-hot encoded window with shape (10,5,5))
         """
         #convert to numpy
-        window_np = np.array(window)
+        window = np.array(window)
+        classes = np.arange(11)  # Classes 0 to 10
+        
+        # Reshape for broadcasting
+        window_expanded = window[np.newaxis, :, :]
+        classes_expanded = classes[:, np.newaxis, np.newaxis]
+        
+        # Create one-hot encoding
+        one_hot = (window_expanded == classes_expanded).astype(int)
+        
+        return one_hot
+    
+    def save_one_hot_as_json(one_hot,filename):
+        ls = one_hot.tolist() #change to nested list (1,11,5,5)
+        json_path = Path("data")
+        file_path = json_path / filename
+        
+        #save
+        if not json_path.is_dir():
+            print(f"Folder {json_path} doesn't exist, creating it....")
+            json_path.mkdir(parents=True,exist_ok=False) #make the folder if it doesnt exist
+        #folder exists
+        json.dump(ls, codecs.open(file_path, 'w', encoding='utf-8'), 
+          separators=(',', ':'), 
+          sort_keys=True, 
+          indent=4)
+    
+    def load_one_hot(filename):
+        json_path = Path("data")
+        file_path = json_path / filename
+        if not file_path.is_file():
+            raise FileNotFoundError(f"File {filename} not found at {file_path}")
+        else:
+            obj_text = codecs.open(file_path,"r",encoding="utf-8").read()
+            one_hot = json.loads(obj_text)
+            return np.array(one_hot)
+
     def getSize(self):
         return self.size
     def getPiece(self,index):

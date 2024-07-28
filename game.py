@@ -63,5 +63,6 @@ class Game():
             return #if we lost, then dont let us click
         index = position[1] // self.pieceSize[1], position[0] // self.pieceSize[0] #integer division by number of pixels in y direction #grab y position of mouse click divided by the pieceSize will yield index on board
         piece = self.board.getPiece(index)
+        self.board.getWindow(index,window_size=(2,2))
         self.board.handleClick(piece,rightClick)
       
