@@ -1,35 +1,88 @@
 import pygame
 import os
 import time
+import string
+import random
 class Game():
-    def __init__(self,board,screenSize):
+    def __init__(self,board,screenSize,solver=None,mode="human"):
         self.board = board
         self.screenSize = screenSize
         self.pieceSize = self.screenSize[0] // self.board.getSize()[1], self.screenSize[1] // self.board.getSize()[0] #no of pixels in x direction divided by no columns
+        self.modes = ["human","ai","ai-realistic"]
+        self.mode = mode
+        self.solver= solver
         self.loadImages()
         
-    def run(self):
+    def run(self,mode):
         pygame.init()
         self.screen = pygame.display.set_mode(self.screenSize)
         running = True
-        while running:
-            #listen for events
-            for event in pygame.event.get():
-                if (event.type == pygame.QUIT):
+        if self.mode == "ai":
+            while running:
+                #print out all available moves
+                available_moves = self.board.getAvailableMoves()
+                print(f"Available moves: {available_moves}")
+
+                #get windows for those available moves (OHvector,x,y)
+                windows = [self.board.getWindow(index[0],index[1]) for index in available_moves]
+                #one hot encoding
+                one_hot = [self.board.window_to_one_hot(window) for window in windows]
+                # one_hot_with_coords = zip(one_hot,available_moves) #(OHvector, (rownum,colnum))
+
+                #Run all coords through ai
+                probabilities = [] #(0.86, (X,y))
+                for one_hot_vec in one_hot:
+                    probability = self.solver.getProbability(one_hot_vec)
+                    probabilities.append(probability)
+                probabilities_with_coords = zip(probabilities,available_moves) #(Probability, (rownum,colnum))
+
+                #get next move
+                safest_cell = self.solver.getNextMove(probabilities) #get index of safest move (move with safe probability closest to 1)
+                next_move = available_moves[safest_cell] #get coordinates of next move
+
+                #click on next move
+                #save window
+                if self.board.numClicked > 0:
+                    #prevent saving noise to the dataset e.g: first move blunders
+                    uuid = self.generateFileUUID() + ".json"
+                    self.handleClickIndex(next_move)
+                    result = 0
+
+                    #Check result
+                    if not self.board.getLost():
+                        result = 1 #safe cell
+                        self.board.save_one_hot_as_json(one_hot[safest_cell],filename=uuid,folder_name="1") #save in 1's folder if safe
+                        if self.board.getWon():
+                            running = False
+                            return result #return a 1 for a win
+                    else:
+                        self.board.save_one_hot_as_json(one_hot[safest_cell],filename=uuid,folder_name="0") #save in 0s folder if unsafe
+                        running = False
+                        return result #return a 0 for a loss
+
+                    
+                    # #save result as json
+                    # self.board.save_label_as_json(result,filename=uuid)
+            return #in the end that the code is glitched, return None
+        else:
+            while running:
+                #listen for events
+                for event in pygame.event.get():
+                    if (event.type == pygame.QUIT):
+                        running = False
+                    if (event.type == pygame.MOUSEBUTTONDOWN):
+                        position = pygame.mouse.get_pos()
+                        rightClick = pygame.mouse.get_pressed()[2]
+                        self.handleClick(position, rightClick)
+                self.draw()
+                pygame.display.flip()
+                if (self.board.getWon()):
+                    #won
+                    sound = pygame.mixer.Sound("win.wav")
+                    sound.play()
+                    time.sleep(3)
                     running = False
-                if (event.type == pygame.MOUSEBUTTONDOWN):
-                    position = pygame.mouse.get_pos()
-                    rightClick = pygame.mouse.get_pressed()[2]
-                    self.handleClick(position, rightClick)
-            self.draw()
-            pygame.display.flip()
-            if (self.board.getWon()):
-                #won
-                sound = pygame.mixer.Sound("win.wav")
-                sound.play()
-                time.sleep(3)
-                running = False
-        pygame.quit()
+            pygame.quit()
     
     def draw(self):
         topLeft = (0,0)
@@ -65,4 +118,14 @@ class Game():
         piece = self.board.getPiece(index)
         self.board.getWindow(index,window_size=(2,2))
         self.board.handleClick(piece,rightClick)
-      
+
+    def handleClickIndex(self,index):
+        #function to handle ai clicks
+        if (self.board.getLost()):
+            return #if we lost, then dont let us click
+        piece = self.board.getPiece(index)
+        self.board.handleClickIndex(piece)
+    
+    def generateFileUUID(self,length=16):
+        chars = string.ascii_letters + string.digits
+        return ''.join(random.choices(chars,K=length))

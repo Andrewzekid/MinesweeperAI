@@ -46,7 +46,7 @@ class Board():
                     continue
                 neighbors.append(self.getPiece((row,col)))
         return neighbors
-    
+# ========== START AI FUNCTIONS ================    
     def getWindow(self,index,window_size=(1,1)):
         """Get all neighbors in a wxh window"""
         width = window_size[0]
@@ -92,31 +92,39 @@ class Board():
         
         return one_hot
     
-    def save_one_hot_as_json(one_hot,filename):
+    def save_one_hot_as_json(one_hot,filename,folder_name="0"):
         ls = one_hot.tolist() #change to nested list (1,11,5,5)
         json_path = Path("data")
-        file_path = json_path / filename
+        file_path = json_path / folder_name / filename
         
-        #save
-        if not json_path.is_dir():
-            print(f"Folder {json_path} doesn't exist, creating it....")
-            json_path.mkdir(parents=True,exist_ok=False) #make the folder if it doesnt exist
+        # #save
+        # if not json_path.is_dir():
+        #     print(f"Folder {json_path} doesn't exist, creating it....")
+        #     json_path.mkdir(parents=True,exist_ok=False) #make the folder if it doesnt exist
         #folder exists
         json.dump(ls, codecs.open(file_path, 'w', encoding='utf-8'), 
           separators=(',', ':'), 
           sort_keys=True, 
           indent=4)
     
-    def load_one_hot(filename):
-        json_path = Path("data")
-        file_path = json_path / filename
+    # def save_label_as_json(value,filename,folder_name="labels"):
+    #     json_path = Path("data")
+    #     file_path = json_path / folder_name / filename
+
+    #     # Save the integer into the JSON file
+    #     with file_path.open("w") as file:
+    #         json.dump(value, file)
+    
+    def load_one_hot(filename,folder_name="json"):
+        json_path = Path("data") 
+        file_path = json_path / folder_name / filename
         if not file_path.is_file():
             raise FileNotFoundError(f"File {filename} not found at {file_path}")
         else:
             obj_text = codecs.open(file_path,"r",encoding="utf-8").read()
             one_hot = json.loads(obj_text)
             return np.array(one_hot)
-
+# ========================== END AI FUNCTIONS =============
     def getSize(self):
         return self.size
     def getPiece(self,index):
@@ -139,10 +147,37 @@ class Board():
         for neighbor in piece.getNeighbors():
             if (not neighbor.getHasBomb() and not neighbor.getClicked()): #if neighbor doesnt have a bomb and is not clicked, recursively click neighbors
                 self.handleClick(neighbor,False) #make a neighbor clicked
-    
+    def handleClickIndex(self,piece):
+        """Handle click function for AI"""
+        if (piece.getClicked()):
+            return #cant click a piece thats flagged, can only toggle the flag
+        piece.click()
+        if (piece.getHasBomb()):
+            self.lost = True
+            return
+        self.numClicked += 1
+        if (piece.getNumAround() != 0):
+            return
+        for neighbor in piece.getNeighbors():
+            if (not neighbor.getHasBomb() and not neighbor.getClicked()): #if neighbor doesnt have a bomb and is not clicked, recursively click neighbors
+                self.handleClickIndex(neighbor) #make a neighbor clicked
+
     def getLost(self):
         return self.lost
         
     def getWon(self):
         return self.numNonBombs == self.numClicked
     
+    def getAvailableMoves(self):
+        """Returns a list of all unclicked cells as tuples (colNum,rowNum)"""
+        available_moves = []
+        size = self.board.getSize()
+        #loop through all rows
+        for row in range(size[0]):
+            for col in range(size[1]):
+                piece = self.board.getPiece((row,col))
+                if not piece.getClicked():
+                    available_moves.append((row,col))
+        return available_moves
+    
+                
