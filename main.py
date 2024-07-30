@@ -13,14 +13,14 @@ trainable = True
 if mode == "ai":
     gamesPlayed = 0
     gamesWon = 0
-    start_games = 2999
-    maxGames = 10000
+    start_games = 3801
+    maxGames = 4000
     #initializer the solver
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    solver = MineSweeperAI(learning_rate=0.0075).to(device)
+    solver = MineSweeperAI(learning_rate=0.01).to(device)
 
     #load model
-    modelpath = Path("checkpoints") / "model_2776_0.pth"
+    modelpath = Path("checkpoints") / "model_3800.pth"
     solver.load_state_dict(torch.load(modelpath))
     global dataloader
 
@@ -52,21 +52,21 @@ if mode == "ai":
         print(f"Train MSE Loss: {total_loss}")
 
 
-    for game_no in range(start_games,maxGames):
-        # board = Board(size,prob)
-        # game = Game(board,screenSize,solver=solver,mode="ai")
-        # result = game.run(mode="ai")
+    for game_no in range(maxGames):
+        board = Board(size,prob)
+        game = Game(board,screenSize,solver=solver,mode="ai")
+        result = game.run(mode="ai")
         
-        # print(f"starting new game! Game No.{game_no}")
-        # print(f"Outcome of the game: {result}")
-        # # print(f"Trainable: {trainable}")
-        # # if result is None:
-        # #     #error
-        # #     print(f"Error encountered when playing game {game_no}, got result None")
-        # #     continue
-        # # else:
-        # gamesPlayed += 1
-        # gamesWon += result
+        print(f"starting new game! Game No.{game_no}")
+        print(f"Outcome of the game: {result}")
+        # print(f"Trainable: {trainable}")
+        # if result is None:
+        #     #error
+        #     print(f"Error encountered when playing game {game_no}, got result None")
+        #     continue
+        # else:
+        gamesPlayed += 1
+        gamesWon += result
         if solver.data_folder == None:
             print("MODEL IS NOW TRAINABLE")
             solver.data_folder="data"
@@ -75,20 +75,19 @@ if mode == "ai":
             
             #train loop
         if trainable==True:
-            # if game_no % 5 == 0:
-            #     # print("AAAA")
-            #     print(f"Game {gamesPlayed}: ---------------- \n ")
-            #     print(f"Win Rate: {(gamesWon/gamesPlayed) * 100}%")
-            #     train(solver,optimizer,solver.data_loader,loss_fn,verbose=True)
-            # else:
-            print(f"Epoch: {game_no}")
-            train(solver,optimizer,solver.data_loader,loss_fn,verbose=True)
-    
-            if game_no % 100 == 0:
+            if game_no % 5 == 0:
+                # print("AAAA")
+                print(f"Game {gamesPlayed}: ---------------- \n ")
+                print(f"Win Rate: {(gamesWon/gamesPlayed) * 100}%")
+                train(solver,optimizer,solver.data_loader,loss_fn,verbose=True)
+            else:
+                train(solver,optimizer,solver.data_loader,loss_fn,verbose=False)
+
+            if game_no % 25 == 0:
                 # print("BBB")
                 print(f"Saving model...")
                 checkpoint_path = Path("checkpoints")
-                torch.save(solver.state_dict(),checkpoint_path / f"model_{game_no}.pth")
+                torch.save(solver.state_dict(),checkpoint_path / f"model_{gamesPlayed}_{int(gamesWon/gamesPlayed)*100}.pth")
             
 
         #train solver on learnt data after every game
