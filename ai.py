@@ -7,21 +7,44 @@ import codecs
 import json
 import torchvision
 from torchvision.transforms import ToTensor
-from torch.utils.data import DataLoader,DatasetFolder
+from torch.utils.data import DataLoader
+from torchvision.datasets import DatasetFolder
 
 # ============== Model 1 - CNN Model ==================
 class MineSweeperAI(nn.Module):
-    def __init__(self,data_folder=None,batch_size=32,shuffle=True):
-        super().__init__(self)
+    def __init__(self,data_folder=None,batch_size=32,learning_rate=0.01,shuffle=True,input_shape=(11,5,5)):
+        super().__init__()
         self.gamesPlayed = 0
         self.gamesWon = 0
         self.data_folder = data_folder
         self.batch_size=batch_size
         self.shuffle=shuffle
         self.dataset_folder = None
-        if self.data_folder is not None:
-            #create dataloader
-            self.createDataLoader()
+        #key hyperparameters
+        self.learning_rate=learning_rate
+        self.kernel_size=(5,5)
+        print(f"Detected data folder {data_folder}")
+        # if self.data_folder is not None:
+        #     #create dataloader
+        #     self.createDataLoader()
+        #     print(f"Created data loader of length {len(self.data_loader)}")
+
+
+        # #define optimizer
+        # self.optimizer = torch.optim.SGD(parameters)
+        #Define NN layers
+        self.relu = nn.ReLU()
+        self.conv25_1 = nn.Conv2d(in_channels=11,out_channels=25,kernel_size=self.kernel_size,padding="same") #conv layer with 25 5x5 filters
+        self.conv25_2 = nn.Conv2d(in_channels=25,out_channels=64,kernel_size=self.kernel_size,padding="same")
+        self.conv50 = nn.Conv2d(in_channels=64,out_channels=1,kernel_size=self.kernel_size,padding="valid")
+        
+    
+    def forward(self,one_hot):
+        """Forward pass for model"""
+        layer_1 = self.relu(self.conv25_1(one_hot))
+        layer_2 = self.relu(self.conv25_2(layer_1))
+        layer_3 = self.relu(self.conv50(layer_2))
+        return layer_3
 
     def getNextMove(moves):
         """Returns the most probable move given the list of next moves"""
@@ -39,6 +62,7 @@ class MineSweeperAI(nn.Module):
         self.createDatasetFolder(self.data_folder) #create dataset_folder
         if self.dataset_folder is not None:
             self.data_loader = DataLoader(self.dataset_folder,batch_size=self.batch_size,shuffle=self.shuffle)
+
         else:
             raise ValueError("Dataset folder was not found")
 

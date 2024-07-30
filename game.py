@@ -4,8 +4,9 @@ import time
 import string
 import random
 class Game():
-    def __init__(self,board,screenSize,solver=None,mode="human"):
+    def __init__(self,board,screenSize,window_size=(2,2),solver=None,mode="human"):
         self.board = board
+        self.window_size = window_size
         self.screenSize = screenSize
         self.pieceSize = self.screenSize[0] // self.board.getSize()[1], self.screenSize[1] // self.board.getSize()[0] #no of pixels in x direction divided by no columns
         self.modes = ["human","ai","ai-realistic"]
@@ -14,8 +15,7 @@ class Game():
         self.loadImages()
         
     def run(self,mode):
-        pygame.init()
-        self.screen = pygame.display.set_mode(self.screenSize)
+
         running = True
         if self.mode == "ai":
             while running:
@@ -24,8 +24,9 @@ class Game():
                 print(f"Available moves: {available_moves}")
 
                 #get windows for those available moves (OHvector,x,y)
-                windows = [self.board.getWindow(index[0],index[1]) for index in available_moves]
+                windows = [self.board.getWindow(index,self.window_size) for index in available_moves]
                 #one hot encoding
+                # print(windows[0])
                 one_hot = [self.board.window_to_one_hot(window) for window in windows]
                 # one_hot_with_coords = zip(one_hot,available_moves) #(OHvector, (rownum,colnum))
 
@@ -47,24 +48,28 @@ class Game():
                     uuid = self.generateFileUUID() + ".json"
                     self.handleClickIndex(next_move)
                     result = 0
-
+                    print("handling result!")
                     #Check result
                     if not self.board.getLost():
                         result = 1 #safe cell
                         self.board.save_one_hot_as_json(one_hot[safest_cell],filename=uuid,folder_name="1") #save in 1's folder if safe
+                        print("game continues")
                         if self.board.getWon():
                             running = False
                             return result #return a 1 for a win
                     else:
+                        print("game lost!")
                         self.board.save_one_hot_as_json(one_hot[safest_cell],filename=uuid,folder_name="0") #save in 0s folder if unsafe
                         running = False
                         return result #return a 0 for a loss
-
+                    
                     
                     # #save result as json
                     # self.board.save_label_as_json(result,filename=uuid)
             return #in the end that the code is glitched, return None
         else:
+            pygame.init()
+            self.screen = pygame.display.set_mode(self.screenSize)
             while running:
                 #listen for events
                 for event in pygame.event.get():

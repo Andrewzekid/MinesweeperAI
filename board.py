@@ -47,8 +47,9 @@ class Board():
                 neighbors.append(self.getPiece((row,col)))
         return neighbors
 # ========== START AI FUNCTIONS ================    
-    def getWindow(self,index,window_size=(1,1)):
+    def getWindow(self,index,window_size:tuple=(1,1)):
         """Get all neighbors in a wxh window"""
+        print(f"Window size: {window_size}")
         width = window_size[0]
         height = window_size[1]
         neighbors = []
@@ -68,7 +69,7 @@ class Board():
         return neighbors
 
 
-    def window_to_one_hot(window):
+    def window_to_one_hot(self,window):
         """
         Gets a window and turns it into a one hot encoding with on dimensions C X H X W. 10 colors channels for 10, -1 and 0 to 8.
         Args:
@@ -80,6 +81,7 @@ class Board():
             numpy.ndarray (one-hot encoded window with shape (10,5,5))
         """
         #convert to numpy
+
         window = np.array(window)
         classes = np.arange(11)  # Classes 0 to 10
         
@@ -171,11 +173,11 @@ class Board():
     def getAvailableMoves(self):
         """Returns a list of all unclicked cells as tuples (colNum,rowNum)"""
         available_moves = []
-        size = self.board.getSize()
+        size = self.getSize()
         #loop through all rows
         for row in range(size[0]):
             for col in range(size[1]):
-                piece = self.board.getPiece((row,col))
+                piece = self.getPiece((row,col))
                 if not piece.getClicked():
                     available_moves.append((row,col))
         return available_moves
