@@ -13,7 +13,7 @@ trainable = True
 if mode == "ai":
     gamesPlayed = 0
     gamesWon = 0
-    maxGames = 100
+    maxGames = 200
     #initializer the solver
     device = "cuda" if torch.cuda.is_available() else "cpu"
     solver = MineSweeperAI(learning_rate=0.005).to(device)
@@ -75,13 +75,15 @@ if mode == "ai":
                 print(f"Game {gamesPlayed}: ---------------- \n ")
                 print(f"Win Rate: {(gamesWon/gamesPlayed) * 100}%")
                 train(solver,optimizer,solver.data_loader,loss_fn,verbose=True)
-            elif game_no % 20 == 0:
+            else:
+                train(solver,optimizer,solver.data_loader,loss_fn,verbose=False)
+
+            if game_no % 25 == 0:
                 # print("BBB")
                 print(f"Saving model...")
                 checkpoint_path = Path("checkpoints")
                 torch.save(solver.state_dict(),checkpoint_path / f"model_{gamesPlayed}_{int(gamesWon/gamesPlayed)*100}")
-            else:
-                train(solver,optimizer,solver.data_loader,loss_fn,verbose=False)
+            
 
         #train solver on learnt data after every game
         
