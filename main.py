@@ -16,7 +16,7 @@ if mode == "ai":
     maxGames = 100
     #initializer the solver
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    solver = MineSweeperAI(learning_rate=0.01).to(device)
+    solver = MineSweeperAI(learning_rate=0.005).to(device)
     global dataloader
 
     #define optimizer and loss function
