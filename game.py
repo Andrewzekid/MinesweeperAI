@@ -2,7 +2,9 @@ import pygame
 import os
 import time
 import string
+import torch
 import random
+import numpy as np
 class Game():
     def __init__(self,board,screenSize,window_size=(2,2),solver=None,mode="human"):
         self.board = board
@@ -12,7 +14,9 @@ class Game():
         self.modes = ["human","ai","ai-realistic"]
         self.mode = mode
         self.solver= solver
-        self.loadImages()
+        if mode != "ai":
+            #on ai mode, optimizer for training
+            self.loadImages()
         
     def run(self,mode):
 
@@ -21,8 +25,8 @@ class Game():
             while running:
                 #print out all available moves
                 available_moves = self.board.getAvailableMoves()
-                print(f"Available moves: {available_moves}")
-
+                # print(f"Available moves: {available_moves}")
+                # print(available_moves)
                 #get windows for those available moves (OHvector,x,y)
                 windows = [self.board.getWindow(index,self.window_size) for index in available_moves]
                 #one hot encoding
@@ -33,37 +37,44 @@ class Game():
                 #Run all coords through ai
                 probabilities = [] #(0.86, (X,y))
                 for one_hot_vec in one_hot:
-                    probability = self.solver.getProbability(one_hot_vec)
+                    # print(one_hot_vec)
+                    probability = self.solver.getProbability(torch.tensor(one_hot_vec).float())
                     probabilities.append(probability)
                 probabilities_with_coords = zip(probabilities,available_moves) #(Probability, (rownum,colnum))
 
                 #get next move
+                # print(f"probabilities: {probabilities}")
                 safest_cell = self.solver.getNextMove(probabilities) #get index of safest move (move with safe probability closest to 1)
                 next_move = available_moves[safest_cell] #get coordinates of next move
-
+                # print(f"Selected move: {next_move}")
                 #click on next move
                 #save window
-                if self.board.numClicked > 0:
-                    #prevent saving noise to the dataset e.g: first move blunders
-                    uuid = self.generateFileUUID() + ".json"
-                    self.handleClickIndex(next_move)
-                    result = 0
-                    print("handling result!")
-                    #Check result
-                    if not self.board.getLost():
-                        result = 1 #safe cell
-                        self.board.save_one_hot_as_json(one_hot[safest_cell],filename=uuid,folder_name="1") #save in 1's folder if safe
-                        print("game continues")
-                        if self.board.getWon():
-                            running = False
-                            return result #return a 1 for a win
-                    else:
-                        print("game lost!")
-                        self.board.save_one_hot_as_json(one_hot[safest_cell],filename=uuid,folder_name="0") #save in 0s folder if unsafe
+                self.handleClickIndex(next_move)
+                print(f"Clicked on {next_move}!")
+                # print(self.board.numClicked)
+                # if self.board.numClicked > 0:
+                #prevent saving noise to the dataset e.g: first move blunders
+                uuid = self.generateFileUUID() + ".json"
+    
+                result = 0
+                # print("handling result!")
+                #Check result
+                if not self.board.getLost():
+                    result = 1 #safe cell
+                    # print(f"One hot encoding for cell: {one_hot[safest_cell]}")
+                    self.board.save_one_hot_as_json(one_hot=np.array(one_hot[safest_cell]).astype(float),filename=uuid,folder_name="1") #save in 1's folder if safe
+                    # print("Safe!")
+                    if self.board.getWon():
+                        print("Game won!")
                         running = False
-                        return result #return a 0 for a loss
+                        return result #return a 1 for a win
+                else:
+                    print("game lost!")
+                    self.board.save_one_hot_as_json(one_hot=np.array(one_hot[safest_cell]).astype(float),filename=uuid,folder_name="0") #save in 0s folder if unsafe
+                    running = False
+                    return result #return a 0 for a loss
                     
-                    
+                   
                     # #save result as json
                     # self.board.save_label_as_json(result,filename=uuid)
             return #in the end that the code is glitched, return None
@@ -133,4 +144,4 @@ class Game():
     
     def generateFileUUID(self,length=16):
         chars = string.ascii_letters + string.digits
-        return ''.join(random.choices(chars,K=length))
+        return ''.join(random.choices(chars,k=length))

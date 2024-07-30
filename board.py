@@ -49,7 +49,7 @@ class Board():
 # ========== START AI FUNCTIONS ================    
     def getWindow(self,index,window_size:tuple=(1,1)):
         """Get all neighbors in a wxh window"""
-        print(f"Window size: {window_size}")
+        # print(f"Window size: {window_size}")
         width = window_size[0]
         height = window_size[1]
         neighbors = []
@@ -65,7 +65,7 @@ class Board():
                 else:
                     current_row.append(self.getPiece((row,col)).getDisplay())
             neighbors.append(current_row)
-        print(f"{width}x{height} Window at {index}: {neighbors}")
+        # print(f"{width}x{height} Window at {index}: {neighbors}")
         return neighbors
 
 
@@ -94,7 +94,7 @@ class Board():
         
         return one_hot
     
-    def save_one_hot_as_json(one_hot,filename,folder_name="0"):
+    def save_one_hot_as_json(self,one_hot,filename,folder_name="0"):
         ls = one_hot.tolist() #change to nested list (1,11,5,5)
         json_path = Path("data")
         file_path = json_path / folder_name / filename
@@ -152,9 +152,11 @@ class Board():
     def handleClickIndex(self,piece):
         """Handle click function for AI"""
         if (piece.getClicked()):
+            print("already clicked")
             return #cant click a piece thats flagged, can only toggle the flag
         piece.click()
         if (piece.getHasBomb()):
+            # print("LOST!!")
             self.lost = True
             return
         self.numClicked += 1
@@ -179,6 +181,7 @@ class Board():
             for col in range(size[1]):
                 piece = self.getPiece((row,col))
                 if not piece.getClicked():
+                    # print(f"piece {piece}")
                     available_moves.append((row,col))
         return available_moves
     

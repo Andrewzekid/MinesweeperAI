@@ -7,6 +7,7 @@ import codecs
 import json
 import torchvision
 from torchvision.transforms import ToTensor
+from torchvision import transforms
 from torch.utils.data import DataLoader
 from torchvision.datasets import DatasetFolder
 
@@ -44,20 +45,22 @@ class MineSweeperAI(nn.Module):
         layer_1 = self.relu(self.conv25_1(one_hot))
         layer_2 = self.relu(self.conv25_2(layer_1))
         layer_3 = self.relu(self.conv50(layer_2))
-        return layer_3
+        return torch.squeeze(layer_3)
 
-    def getNextMove(moves):
+    def getNextMove(self,moves):
         """Returns the most probable move given the list of next moves"""
         moves_np = np.array(moves)
         return moves_np.argmax(axis=0) #gets the most probable argument
-    def loadJson(filepath):
+    def loadJson(self,filepath):
         obj_text = codecs.open(filepath,"r",encoding="utf-8").read()
         b_new = json.loads(obj_text)
-        return b_new #return the list loaded
+        return torch.tensor(b_new,dtype=torch.float32) #return the list loaded
     def getProbability(self,one_hot):
         """Given a one-hot encoding of a 5x5 window, get the probability that the surrounding cell is a mine"""
-        return self.forward(one_hot)
-    
+        with torch.inference_mode():
+            probs = self.forward(one_hot)
+            return probs
+
     def createDataLoader(self):
         self.createDatasetFolder(self.data_folder) #create dataset_folder
         if self.dataset_folder is not None:
@@ -67,13 +70,15 @@ class MineSweeperAI(nn.Module):
             raise ValueError("Dataset folder was not found")
 
     def createDatasetFolder(self,data_path):
+        transform = transforms.Compose([
+            transforms.ToTensor()
+        ])
         data_path = Path(data_path)
         if data_path.is_dir():
             self.dataset_folder = DatasetFolder(
                 root = data_path,
                 loader=self.loadJson,
-                extensions=("json",),
-                transform=ToTensor #convert file to tensor
+                extensions=("json",),#convert file to tensor
             )
         else:
             raise FileNotFoundError(f"Path {str(data_path)} does not exist!")
