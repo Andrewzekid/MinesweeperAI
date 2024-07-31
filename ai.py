@@ -36,8 +36,9 @@ class MineSweeperAI(nn.Module):
         #Define NN layers
         self.relu = nn.ReLU()
         self.conv25_1 = nn.Conv2d(in_channels=11,out_channels=25,kernel_size=self.kernel_size,padding="same") #conv layer with 25 5x5 filters
-        self.conv25_2 = nn.Conv2d(in_channels=25,out_channels=64,kernel_size=self.kernel_size,padding="same")
-        self.conv50 = nn.Conv2d(in_channels=64,out_channels=1,kernel_size=self.kernel_size,padding="valid")
+        self.conv25_2 = nn.Conv2d(in_channels=25,out_channels=25,kernel_size=self.kernel_size,padding="same")
+        self.conv50 = nn.Conv2d(in_channels=25,out_channels=64,kernel_size=self.kernel_size,padding="same")
+        self.maxpool_1 = nn.MaxPool2d()
         
     
     def forward(self,one_hot):

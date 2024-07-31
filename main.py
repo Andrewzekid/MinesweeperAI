@@ -21,7 +21,7 @@ if mode == "ai":
 
     #load model
     modelpath = Path("checkpoints") / "model_3800.pth"
-    solver.load_state_dict(torch.load(modelpath))
+    solver.load_state_dict(torch.load(modelpath,map_location ='cpu'))
     global dataloader
 
     #define optimizer and loss function
