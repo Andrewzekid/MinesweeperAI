@@ -38,7 +38,8 @@ class MineSweeperAI(nn.Module):
         self.conv25_1 = nn.Conv2d(in_channels=11,out_channels=25,kernel_size=self.kernel_size,padding="same") #conv layer with 25 5x5 filters
         self.conv25_2 = nn.Conv2d(in_channels=25,out_channels=25,kernel_size=self.kernel_size,padding="same")
         self.conv50 = nn.Conv2d(in_channels=25,out_channels=64,kernel_size=self.kernel_size,padding="same")
-        self.maxpool_1 = nn.MaxPool2d()
+        self.maxpool_1 = nn.MaxPool2d(kernel_size=(2,2),stride=2) #downsamples to 64 x 2 x2
+        self.output_1 = nn.Linear(in_features=256,out_features=1)
         
     
     def forward(self,one_hot):
@@ -46,7 +47,9 @@ class MineSweeperAI(nn.Module):
         layer_1 = self.relu(self.conv25_1(one_hot))
         layer_2 = self.relu(self.conv25_2(layer_1))
         layer_3 = self.relu(self.conv50(layer_2))
-        return torch.squeeze(layer_3)
+        layer_4 = self.maxpool_1(layer_3)
+        output = self.output_1(layer_4)
+        return output
 
     def getNextMove(self,moves):
         """Returns the most probable move given the list of next moves"""
