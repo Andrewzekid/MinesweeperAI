@@ -25,6 +25,7 @@ class Game():
             while running:
                 #print out all available moves
                 available_moves = self.board.getAvailableMoves()
+                print(f"Length of available moves: {len(available_moves)}")
                 # print(f"Available moves: {available_moves}")
                 # print(available_moves)
                 #get windows for those available moves (OHvector,x,y)
@@ -35,11 +36,9 @@ class Game():
                 # one_hot_with_coords = zip(one_hot,available_moves) #(OHvector, (rownum,colnum))
 
                 #Run all coords through ai
-                probabilities = [] #(0.86, (X,y))
-                for one_hot_vec in one_hot:
-                    # print(one_hot_vec)
-                    probability = self.solver.getProbability(torch.tensor(one_hot_vec).float())
-                    probabilities.append(probability)
+                #(0.86, (X,y))
+                one_hot_vec = torch.tensor(one_hot).float()
+                probabilities = self.solver.getProbability(one_hot_vec).squeeze().numpy() 
                 probabilities_with_coords = zip(probabilities,available_moves) #(Probability, (rownum,colnum))
 
                 #get next move
