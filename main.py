@@ -2,23 +2,23 @@ from game import Game
 from board import Board
 import torch
 from ai import MineSweeperAI
-from torchsummary import summary
+from torchinfo import summary
 from pathlib import Path
-size = (8,8)
+size = (9,9)
 import random
-prob = 0.126 #12.6% is easy, #18.1% is average for intermeditate, 20.6% is average for expert        
+prob = 0.123 #12.6% is easy, #18.1% is average for intermeditate, 20.6% is average for expert        
 screenSize = (800,800)
 mode = "ai"
-seeds = [random.randint(0,3688880) for i in range(200)]
+seeds = [random.randint(0,3688880) for i in range(4000)]
 winning_seeds = []
 import time
 global trainable 
-trainable = True
+trainable = False
 if mode == "ai":
     gamesPlayed = 0
     gamesWon = 0
     start_games = 3801
-    maxGames = 200
+    maxGames = 500
 
     #initializer the solver
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -27,8 +27,8 @@ if mode == "ai":
     #load weights
     model_path=Path("checkpoints") / "model_CNN_epoch_5_accuracy_0.8654.pth"
     solver.load_state_dict(torch.load(model_path,weights_only=True,map_location=torch.device("cpu")))
-    with torch.inference_mode():
-        summary(solver, (11, 5, 5),batch_size=32)
+    # with torch.inference_mode():
+    #     summary(solver, (64,11, 5, 5))
 
     # #load model
     # modelpath = Path("checkpoints") / "model_3800.pth"
@@ -111,7 +111,8 @@ if mode == "ai":
             
     with open("seeds.txt","w") as seeds_file:
         for seed in winning_seeds:
-            seeds_file.write(seed)
+            seeds_file.write(str(seed))
+            seeds_file.write("\n")
         #train solver on learnt data after every game
 else:
     print(f"[INFO] Starting new game!")
