@@ -107,7 +107,7 @@ class MineSweeperAI(nn.Module):
         #Split into training and test dataset
         self.train_dataset,self.test_dataset = random_split(self.dataset_folder,lengths=[self.train_test_split,1-self.train_test_split],generator=torch.Generator().manual_seed(42))
         if self.dataset_folder is not None:
-            self.data_loader = DataLoader(self.train_dataset,batch_size=self.batch_size,shuffle=self.shuffle,sampler=self.sampler,pin_memory=True)
+            self.data_loader = DataLoader(self.train_dataset,batch_size=self.batch_size,shuffle=False,sampler=self.sampler,pin_memory=True)
             self.test_data_loader = DataLoader(self.test_dataset,batch_size=self.batch_size,shuffle=self.shuffle,pin_memory=True)
         else:
             raise ValueError("Dataset folder was not found")
