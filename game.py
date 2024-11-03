@@ -24,12 +24,10 @@ class Game():
         self.board.setSizes(self.pieceSize,self.screenSize)
     @staticmethod
     def get_window_position():
-        hwnd = pygame.display.get_wm_info()["window"]
-        rect = win32gui.GetWindowRect(hwnd)
-        return rect
+        pass
 
     def run(self,mode):
-        
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         running = True
         if self.mode == "ai":
             while running:
@@ -46,8 +44,13 @@ class Game():
 
                 #Run all coords through ai
                 #(0.86, (X,y))
-                one_hot_vec = torch.tensor(one_hot).float()
-                probabilities = self.solver.getProbability(one_hot_vec).squeeze().numpy() 
+
+                
+                one_hot_vec = torch.tensor(one_hot).float().to(device)
+                if device == "cuda":
+                    probabilities = self.solver.getProbability(one_hot_vec).squeeze().cpu().numpy() 
+                else:
+                    probabilities = self.solver.getProbability(one_hot_vec).squeeze().numpy() 
                 probabilities_with_coords = zip(probabilities,available_moves) #(Probability, (rownum,colnum))
 
                 #get next move
