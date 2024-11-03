@@ -20,12 +20,6 @@ class Game():
         if mode != "ai":
             #on ai mode, optimizer for training
             self.loadImages()
-
-        self.board.setSizes(self.pieceSize,self.screenSize)
-    @staticmethod
-    def get_window_position():
-        pass
-
     def run(self,mode):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         running = True
@@ -89,70 +83,7 @@ class Game():
                     # #save result as json
                     # self.board.save_label_as_json(result,filename=uuid)
             return #in the end that the code is glitched, return None
-        else:
-            pygame.init()
-            self.screen = pygame.display.set_mode(self.screenSize)
-            window = self.get_window_position()
-            print(f"Window coordinates are: {window}")
-            while running:
-                if mode == "ai-display":
-                    #print out all available moves
-                    available_moves = self.board.getAvailableMoves()
-                    # print(f"Available moves: {available_moves}")
-                    # print(available_moves)
-                    #get windows for those available moves (OHvector,x,y)
-                    windows = [self.board.getWindow(index,self.window_size) for index in available_moves]
-                    #one hot encoding
-                    # print(windows[0])
-                    one_hot = [self.board.window_to_one_hot(window) for window in windows]
-                    # one_hot_with_coords = zip(one_hot,available_moves) #(OHvector, (rownum,colnum))
-
-                    #Run all coords through ai
-                    #(0.86, (X,y))
-                    one_hot_vec = torch.tensor(one_hot).float()
-                    probabilities = self.solver.getProbability(one_hot_vec).squeeze().numpy() 
-                    probabilities_with_coords = zip(probabilities,available_moves) #(Probability, (rownum,colnum))
-
-                    #get next move
-                    safest_cell = self.solver.getNextMove(probabilities) #get index of safest move (move with safe probability closest to 1)
-                    next_move = available_moves[safest_cell] #get coordinates of next move
-                    #get piece and click
-                    piece = self.board.getPiece(next_move)
-                    coords = piece.window_coordinates
-                    piece_left = coords[0],coords[1]              
-                    piece_center = (piece_left[0] + self.pieceSize[0]//2,piece_left[1] + self.pieceSize[1]//2)
-                    pyautogui.moveTo(*piece_center)
-                    pyautogui.rightClick()
-                    # self.handleClickIndex(next_move)
-                    print(f"[INFO] Moving mouse to: {piece_center} Clicked on {next_move}!")
-                #listen for events
-                for event in pygame.event.get():
-                    if (event.type == pygame.QUIT):
-                        running = False
-                    if (event.type == pygame.MOUSEBUTTONDOWN):
-                        position = pygame.mouse.get_pos()
-                        rightClick = pygame.mouse.get_pressed()[2]
-                        self.handleClick(position, rightClick)
-                self.draw()
-                pygame.display.flip()
-
-                result = 0
-                # print("handling result!")
-                #Check result
-                if not self.board.getLost():
-                    result = 1
-                    if self.board.getWon():
-                        print("Game won!")
-                        sound = pygame.mixer.Sound("win.wav")
-                        sound.play()
-                        time.sleep(3)
-                        running = False
-                        return result #return a 1 for a win
-                else:
-                    print("Game lost!")
-                    running = False
-                    return result #return a 0 for a loss
-            pygame.quit()
+         
     
     def draw(self):
         topLeft = (0,0)
