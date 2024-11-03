@@ -1,5 +1,5 @@
 import pygame
-import win32gui
+
 class Piece():
     def __init__(self,hasBomb):
         self.hasBomb = hasBomb
@@ -28,9 +28,7 @@ class Piece():
                 self.numAround += 1
     @staticmethod
     def get_window_position():
-        hwnd = pygame.display.get_wm_info()["window"]
-        rect = win32gui.GetWindowRect(hwnd)
-        return rect
+        pass
     
     @property
     def window_coordinates(self):
