@@ -4,11 +4,11 @@ import torch
 from ai import MineSweeperAI
 from torchsummary import summary
 from pathlib import Path
-size = (8,8)
+size = (16,16)
 import random
 prob = 0.126 #12.6% is easy, #18.1% is average for intermeditate, 20.6% is average for expert        
 screenSize = (800,800)
-mode = "ai"
+mode = "ai-display"
 seeds = [random.randint(0,3688880) for i in range(200)]
 winning_seeds = []
 import time
@@ -117,22 +117,20 @@ else:
     print(f"[INFO] Starting new game!")
 #initializer the solver
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    solver = MineSweeperAI(learning_rate=0.01,blocks= [(11,22,5,2,1),(22,44,5,2,1)],hidden_units=1100).to(device)
+    solver = MineSweeperAI(learning_rate=0.01,blocks= [(11,22,5,1,1),(22,44,5,1,1)],hidden_units=44).to(device)
     
     #load weights
-    model_path=Path("checkpoints") / "model_CNN_epoch_5_accuracy_0.8654.pth"
+    model_path=Path("checkpoints") / "CNN_epoch_25_accuracy_0.723.pth"
     solver.load_state_dict(torch.load(model_path,weights_only=True,map_location=torch.device("cpu")))
     board = Board(size,prob)
     game = Game(board,screenSize,solver=solver,mode="ai-display")
     result = game.run(mode="ai-display")
-
-
     print(f"[INFO] Outcome of the game: {result}")
     
 
     # print(f"Trainable: {trainable}")
     # if result is None:
-    #     #error
+    #     #error182343
     #     print(f"Error encountered when playing game {game_no}, got result None")
     #     continue
     # else:

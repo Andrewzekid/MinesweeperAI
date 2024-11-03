@@ -38,6 +38,7 @@ class Game():
                 # print(f"Available moves: {available_moves}")
                 # print(available_moves)
                 #get windows for those available moves (OHvector,x,y)
+
                 windows = [self.board.getWindow(index,self.window_size) for index in available_moves]
                 #one hot encoding
                 # print(windows[0])
@@ -91,12 +92,14 @@ class Game():
             self.screen = pygame.display.set_mode(self.screenSize)
             window = self.get_window_position()
             print(f"Window coordinates are: {window}")
+            # time.sleep(3)
             while running:
                 if mode == "ai-display":
                     #print out all available moves
                     available_moves = self.board.getAvailableMoves()
                     # print(f"Available moves: {available_moves}")
                     # print(available_moves)
+                    
                     #get windows for those available moves (OHvector,x,y)
                     windows = [self.board.getWindow(index,self.window_size) for index in available_moves]
                     #one hot encoding
@@ -140,9 +143,7 @@ class Game():
                     result = 1
                     if self.board.getWon():
                         print("Game won!")
-                        sound = pygame.mixer.Sound("win.wav")
-                        sound.play()
-                        time.sleep(3)
+                        time.sleep(5)
                         running = False
                         return result #return a 1 for a win
                 else:

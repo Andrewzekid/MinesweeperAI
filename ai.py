@@ -56,7 +56,7 @@ class MineSweeperAI(nn.Module):
         )
         self.network.append(self.linear)
         self.network.append(nn.Sigmoid())
-        print(self.network)
+
 
         #Train test split ratio
         self.train_test_split = 0.8 #80/20 train test split.
@@ -88,7 +88,9 @@ class MineSweeperAI(nn.Module):
         """Returns the most probable move given the list of next moves"""
         # print(f"Moves: {moves}")
         moves_np = np.array(moves)
-        return moves_np.argmin(axis=0) #gets the most probable to be safe, least likely to be a mine
+        top_move = moves_np.argmax(axis=0)
+        # print(f"Top Move: {top_move}, all moves: {moves_np}")
+        return top_move #gets the most probable to be safe, least likely to be a mine
     def loadJson(self,filepath):
         obj_text = codecs.open(filepath,"r",encoding="utf-8").read()
         b_new = json.loads(obj_text)
