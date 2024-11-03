@@ -6,6 +6,7 @@ from pathlib import Path
 import codecs
 import json
 import torchvision
+from torch.utils.data.sampler import WeightedRandomSampler
 from torchvision.transforms import ToTensor
 from torchvision import transforms
 from torch.utils.data import DataLoader
@@ -88,7 +89,7 @@ class MineSweeperAI(nn.Module):
         """Returns the most probable move given the list of next moves"""
         # print(f"Moves: {moves}")
         moves_np = np.array(moves)
-        return moves_np.argmin(axis=0) #gets the most probable to be safe, least likely to be a mine
+        return moves_np.argmax(axis=0) #gets the most probable to be safe, least likely to be a mine
     def loadJson(self,filepath):
         obj_text = codecs.open(filepath,"r",encoding="utf-8").read()
         b_new = json.loads(obj_text)
@@ -105,7 +106,7 @@ class MineSweeperAI(nn.Module):
         #Split into training and test dataset
         self.train_dataset,self.test_dataset = random_split(self.dataset_folder,lengths=[self.train_test_split,1-self.train_test_split],generator=torch.Generator().manual_seed(42))
         if self.dataset_folder is not None:
-            self.data_loader = DataLoader(self.train_dataset,batch_size=self.batch_size,shuffle=self.shuffle,pin_memory=True)
+            self.data_loader = DataLoader(self.train_dataset,batch_size=self.batch_size,shuffle=self.shuffle,sampler=self.sampler,pin_memory=True)
             self.test_data_loader = DataLoader(self.test_dataset,batch_size=self.batch_size,shuffle=self.shuffle,pin_memory=True)
         else:
             raise ValueError("Dataset folder was not found")
@@ -121,6 +122,13 @@ class MineSweeperAI(nn.Module):
                 loader=self.loadJson,
                 extensions=("json",),#convert file to tensor
             )
+            self.class_weights = [5,1]
+            self.sample_weights = [0] * len(self.dataset_folder) #specify exactly the weight for each example in our dataset
+            for idx, (data,label) in enumerate(self.dataset):
+                class_weight = self.class_weights[label]
+                self.sample_weights[idx] = class_weight
+                #Take out what class weight is for that particular set
+            self.sampler = WeightedRandomSampler(self.sample_weights,num_samples=len(self.sample_weights),replacement=True)
         else:
             raise FileNotFoundError(f"Path {str(data_path)} does not exist!")
 
