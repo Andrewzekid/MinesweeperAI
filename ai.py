@@ -124,7 +124,7 @@ class MineSweeperAI(nn.Module):
             )
             self.class_weights = [5,1]
             self.sample_weights = [0] * len(self.dataset_folder) #specify exactly the weight for each example in our dataset
-            for idx, (data,label) in enumerate(self.train_dataset):
+            for idx, (data,label) in enumerate(self.dataset_folder):
                 class_weight = self.class_weights[label]
                 self.sample_weights[idx] = class_weight
                 #Take out what class weight is for that particular set
