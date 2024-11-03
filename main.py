@@ -13,7 +13,7 @@ seeds = [random.randint(0,3688880) for i in range(4000)]
 winning_seeds = []
 import time
 global trainable 
-trainable = False
+trainable = True
 if mode == "ai":
     gamesPlayed = 0
     gamesWon = 0

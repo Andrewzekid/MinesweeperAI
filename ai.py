@@ -91,6 +91,7 @@ class MineSweeperAI(nn.Module):
         moves_np = np.array(moves)
         return moves_np.argmax(axis=0) #gets the most probable to be safe, least likely to be a mine
     def loadJson(self,filepath):
+        print(f"Now decoding: {filepath}")
         obj_text = codecs.open(filepath,"r",encoding="utf-8").read()
         b_new = json.loads(obj_text)
         return torch.tensor(b_new,dtype=torch.float32) #return the list loaded
