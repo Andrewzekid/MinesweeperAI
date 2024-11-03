@@ -5,8 +5,7 @@ import string
 import torch
 import random
 import numpy as np
-import pyautogui
-import win32gui
+
 
 class Game():
     def __init__(self,board,screenSize,window_size=(2,2),solver=None,mode="human"):
