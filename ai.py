@@ -75,7 +75,6 @@ class MineSweeperAI(nn.Module):
 
     def loadJson(self, filepath):
         """Load and decode JSON file into tensor"""
-        print(f"Now decoding: {filepath}")
         with codecs.open(filepath, "r", encoding="utf-8") as f:
             obj_text = f.read()
         b_new = json.loads(obj_text)
@@ -126,11 +125,7 @@ class MineSweeperAI(nn.Module):
         test_size = total_size - train_size
         
         # Create the splits
-        self.train_dataset, self.test_dataset = random_split(
-            self.dataset_folder,
-            lengths=[train_size, test_size],
-            generator=torch.Generator().manual_seed(42)
-        )
+        self.train_dataset = self.dataset_folder
         
         # Create the data loaders
         self.data_loader = DataLoader(
@@ -141,12 +136,6 @@ class MineSweeperAI(nn.Module):
             pin_memory=True
         )
         
-        self.test_data_loader = DataLoader(
-            self.test_dataset,
-            batch_size=self.batch_size,
-            shuffle=self.shuffle,
-            pin_memory=True
-        )
 
     def getWinRate(self):
         """Calculate the win rate"""
