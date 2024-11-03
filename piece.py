@@ -1,9 +1,13 @@
+import pygame
+import win32gui
 class Piece():
     def __init__(self,hasBomb):
         self.hasBomb = hasBomb
         self.clicked = False
         self.flagged = False
-
+        self.pieceSize = None
+        self.screenSize = None
+        self.position = None
     def getHasBomb(self):
         return self.hasBomb
     
@@ -22,8 +26,22 @@ class Piece():
         for piece in self.neighbors:
             if (piece.getHasBomb()):
                 self.numAround += 1
-        
+    @staticmethod
+    def get_window_position():
+        hwnd = pygame.display.get_wm_info()["window"]
+        rect = win32gui.GetWindowRect(hwnd)
+        return rect
     
+    @property
+    def window_coordinates(self):
+        """Returns the coordinates of a piece in tuples, (left,top,right,bottom)"""
+        left,top,right,bottom = self.get_window_position()
+        window_tl = (left,top)
+        window_br = (right,bottom)
+
+        #Calculate the navbar size
+        navbar_size = (window_br[1] - window_tl[1]) - self.screenSize[1]
+        return self.position[0]+left, top + navbar_size + self.position[1],self.position[0]+left + self.pieceSize[0],top + navbar_size + self.position[1] + self.pieceSize[1]
     def getNumAround(self):
         return self.numAround
     def toggleFlag(self):

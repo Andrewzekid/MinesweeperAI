@@ -5,6 +5,9 @@ import string
 import torch
 import random
 import numpy as np
+import pyautogui
+import win32gui
+
 class Game():
     def __init__(self,board,screenSize,window_size=(2,2),solver=None,mode="human"):
         self.board = board
@@ -17,15 +20,21 @@ class Game():
         if mode != "ai":
             #on ai mode, optimizer for training
             self.loadImages()
-        
-    def run(self,mode):
 
+        self.board.setSizes(self.pieceSize,self.screenSize)
+    @staticmethod
+    def get_window_position():
+        hwnd = pygame.display.get_wm_info()["window"]
+        rect = win32gui.GetWindowRect(hwnd)
+        return rect
+
+    def run(self,mode):
+        
         running = True
         if self.mode == "ai":
             while running:
                 #print out all available moves
                 available_moves = self.board.getAvailableMoves()
-                print(f"Length of available moves: {len(available_moves)}")
                 # print(f"Available moves: {available_moves}")
                 # print(available_moves)
                 #get windows for those available moves (OHvector,x,y)
@@ -80,7 +89,39 @@ class Game():
         else:
             pygame.init()
             self.screen = pygame.display.set_mode(self.screenSize)
+            window = self.get_window_position()
+            print(f"Window coordinates are: {window}")
             while running:
+                if mode == "ai-display":
+                    #print out all available moves
+                    available_moves = self.board.getAvailableMoves()
+                    # print(f"Available moves: {available_moves}")
+                    # print(available_moves)
+                    #get windows for those available moves (OHvector,x,y)
+                    windows = [self.board.getWindow(index,self.window_size) for index in available_moves]
+                    #one hot encoding
+                    # print(windows[0])
+                    one_hot = [self.board.window_to_one_hot(window) for window in windows]
+                    # one_hot_with_coords = zip(one_hot,available_moves) #(OHvector, (rownum,colnum))
+
+                    #Run all coords through ai
+                    #(0.86, (X,y))
+                    one_hot_vec = torch.tensor(one_hot).float()
+                    probabilities = self.solver.getProbability(one_hot_vec).squeeze().numpy() 
+                    probabilities_with_coords = zip(probabilities,available_moves) #(Probability, (rownum,colnum))
+
+                    #get next move
+                    safest_cell = self.solver.getNextMove(probabilities) #get index of safest move (move with safe probability closest to 1)
+                    next_move = available_moves[safest_cell] #get coordinates of next move
+                    #get piece and click
+                    piece = self.board.getPiece(next_move)
+                    coords = piece.window_coordinates
+                    piece_left = coords[0],coords[1]              
+                    piece_center = (piece_left[0] + self.pieceSize[0]//2,piece_left[1] + self.pieceSize[1]//2)
+                    pyautogui.moveTo(*piece_center)
+                    pyautogui.rightClick()
+                    # self.handleClickIndex(next_move)
+                    print(f"[INFO] Moving mouse to: {piece_center} Clicked on {next_move}!")
                 #listen for events
                 for event in pygame.event.get():
                     if (event.type == pygame.QUIT):
@@ -91,12 +132,23 @@ class Game():
                         self.handleClick(position, rightClick)
                 self.draw()
                 pygame.display.flip()
-                if (self.board.getWon()):
-                    #won
-                    sound = pygame.mixer.Sound("win.wav")
-                    sound.play()
-                    time.sleep(3)
+
+                result = 0
+                # print("handling result!")
+                #Check result
+                if not self.board.getLost():
+                    result = 1
+                    if self.board.getWon():
+                        print("Game won!")
+                        sound = pygame.mixer.Sound("win.wav")
+                        sound.play()
+                        time.sleep(3)
+                        running = False
+                        return result #return a 1 for a win
+                else:
+                    print("Game lost!")
                     running = False
+                    return result #return a 0 for a loss
             pygame.quit()
     
     def draw(self):
@@ -106,6 +158,7 @@ class Game():
                 piece = self.board.getPiece((row,col))
                 image = self.getImage(piece)
                 self.screen.blit(image,topLeft)
+                piece.position = topLeft #Update piece position
                 topLeft = topLeft[0] + self.pieceSize[0], topLeft[1]
             topLeft = 0, topLeft[1] + self.pieceSize[1]
 

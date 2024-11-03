@@ -14,21 +14,27 @@ class Board():
         self.seed = seed
         self.setBoard(seed=self.seed)
 
-    
+    def setSizes(self,pieceSize,screenSize):
+        for row in self.board:
+            for piece in row:
+                piece.pieceSize = pieceSize
+                piece.screenSize = screenSize
 
     def setBoard(self,seed=None):
         self.board = []
         if seed:
             random.seed(seed)
         for row in range(self.size[0]):
-            row = []
+            row_num = row
+            hrow = [] #hrow = horiziontal row
             for col in range(self.size[1]):
                 hasBomb = random.random() < self.prob
                 if (not hasBomb):
                     self.numNonBombs += 1
                 piece = Piece(hasBomb)
-                row.append(piece) #each piece represents a piece on minesweeper game
-            self.board.append(row)
+                piece.position = (row_num,col)
+                hrow.append(piece) #each piece represents a piece on minesweeper game
+            self.board.append(hrow)
         self.setNeighbors()
     def setNeighbors(self):
         for row in range(self.size[0]):
