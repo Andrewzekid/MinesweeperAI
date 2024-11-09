@@ -9,7 +9,9 @@ class Board():
         self.prob = prob #probability each piece has a bomb
         self.lost = False
         self.won = False
+
         self.numClicked = 0
+        self.FirstMove = True
         self.numNonBombs = 0
         self.seed = seed
         self.setBoard(seed=self.seed)
@@ -139,22 +141,63 @@ class Board():
         return self.board[index[0]][index[1]]
     def getNumAround(self):
         return self.numAround
-    def handleClick(self,piece,flag):
+    def handleClick(self, piece, flag):
+        # Handle already clicked or flagged pieces
         if (piece.getClicked() or (not flag and piece.getFlagged())):
-            return #cant click a piece thats flagged, can only toggle the flag
+            return  # cant click a piece thats flagged, can only toggle the flag
+        
+        # Handle flagging
         if (flag):
             piece.toggleFlag()
             return
-        piece.click()
+
+        # Handle first move on a bomb
+        if (piece.getHasBomb() and self.FirstMove):
+            original_position = piece.position  # Store position before resetting
+            self.setBoard(seed=None)
+            
+            # Get the piece at the same position in the new board
+            new_piece = self.getPiece(original_position)
+            print(f"First Move safe, Resetting board...")
+            return self.handleClick(new_piece, flag)
+        
+        # Handle hitting a bomb (not on first move)
         if (piece.getHasBomb()):
             self.lost = True
             return
+
+        # Click the piece
+        piece.click()
+        if self.FirstMove:
+            self.FirstMove = False
+            self.setSizes(self.pieceSize,self.screenSize)
+            
         self.numClicked += 1
+        
+        # If it's not an empty cell, we're done
         if (piece.getNumAround() != 0):
             return
-        for neighbor in piece.getNeighbors():
-            if (not neighbor.getHasBomb() and not neighbor.getClicked()): #if neighbor doesnt have a bomb and is not clicked, recursively click neighbors
-                self.handleClick(neighbor,False) #make a neighbor clicked
+
+        # For empty cells, use iteration instead of recursion
+        checked = set()  # Keep track of pieces we've already processed
+        to_check = piece.getNeighbors()
+        
+        while to_check:
+            neighbor = to_check.pop(0)
+            if neighbor in checked:
+                continue
+                
+            checked.add(neighbor)
+            
+            if (not neighbor.getHasBomb() and not neighbor.getClicked()):
+                neighbor.click()
+                self.numClicked += 1
+                if neighbor.getNumAround() == 0:
+                    # Add unclicked, non-bomb neighbors to the check list
+                    new_neighbors = [n for n in neighbor.getNeighbors() 
+                                if n not in checked and not n.getClicked() 
+                                and not n.getHasBomb()]
+                    to_check.extend(new_neighbors)
     def handleClickIndex(self,piece):
         """Handle click function for AI"""
         if (piece.getClicked()):
